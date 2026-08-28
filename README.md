@@ -1,5 +1,7 @@
 # FEREmotionDetector
 
+![FEREmotionDetector cover](images/cover.png)
+
 Project ini adalah contoh sederhana facial expression classification dengan FER-2013, HOG feature extraction, dan scikit-learn.
 
 Pipeline yang dipelajari:
