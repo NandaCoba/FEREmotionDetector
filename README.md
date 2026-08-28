@@ -67,8 +67,94 @@ Jika dataset hanya punya satu folder berisi subfolder class, loader tetap bisa d
 
 ## Install
 
+Disarankan memakai virtual environment agar dependency project tidak bercampur dengan package global:
+
+```bash
+python -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+```
+
+Jika memakai Fedora dan webcam bermasalah dengan `opencv-python` dari pip, pakai OpenCV bawaan Fedora:
+
+```bash
+sudo dnf install python3-opencv v4l-utils
+python -m pip uninstall opencv-python
+```
+
+Jika tidak memakai virtual environment, install dependency langsung:
+
 ```bash
 pip install -r requirements.txt
+```
+
+## Quick Start
+
+Masuk ke folder project:
+
+```bash
+cd ~/Documents/Projects/MotionDetection
+```
+
+Cek dataset:
+
+```bash
+python inspect_dataset.py
+```
+
+Jalankan evaluasi model yang sudah ada:
+
+```bash
+python evaluate.py
+```
+
+Jalankan webcam:
+
+```bash
+python camera.py
+```
+
+Jika kamera tidak ada di `/dev/video0`, cek device kamera:
+
+```bash
+v4l2-ctl --list-devices
+```
+
+Contoh output:
+
+```text
+USB Composite Device: DV20 USB:
+    /dev/video1
+    /dev/video2
+```
+
+Jalankan dengan device yang benar:
+
+```bash
+python camera.py /dev/video1
+```
+
+Tekan `q` untuk keluar dari window webcam.
+
+## Training Ulang
+
+Jika ingin membuat ulang model dari dataset:
+
+```bash
+python train.py
+```
+
+Model akan disimpan ke:
+
+```text
+models/emotion_model.pkl
+```
+
+Setelah training selesai, jalankan:
+
+```bash
+python evaluate.py
+python camera.py /dev/video1
 ```
 
 ## Image Menjadi Angka
@@ -342,6 +428,20 @@ Jalankan:
 python camera.py
 ```
 
+Atau pilih device kamera secara manual:
+
+```bash
+python camera.py /dev/video1
+```
+
+`camera.py` akan:
+
+- mencari device `/dev/video*` jika tidak diberi argumen
+- membuka kamera dengan resolusi `640x480`
+- mendeteksi wajah pada frame yang diperkecil agar lebih cepat
+- memilih wajah terbesar
+- menstabilkan kotak wajah dan label prediksi agar tidak mudah loncat
+
 Alurnya:
 
 ```text
@@ -366,6 +466,48 @@ untuk keluar.
 
 `camera.py` tidak melakukan training. Model hanya di-load satu kali, lalu dipakai untuk inference setiap frame.
 
+### Troubleshooting Webcam
+
+Jika muncul:
+
+```text
+Webcam tidak tersedia.
+```
+
+Cek device kamera:
+
+```bash
+v4l2-ctl --list-devices
+ls -l /dev/video*
+```
+
+Jika user belum punya akses group `video`:
+
+```bash
+sudo usermod -aG video $USER
+newgrp video
+```
+
+Jika `cv2.CascadeClassifier` tidak ditemukan, berarti OpenCV yang terinstall tidak cocok. Install OpenCV 4.x:
+
+```bash
+python -m pip install --user --force-reinstall "opencv-python<5"
+```
+
+Jika di Fedora `cv2.data` tidak ditemukan, install data OpenCV dari package Fedora:
+
+```bash
+sudo dnf install opencv python3-opencv
+```
+
+Jika kamera terdeteksi oleh `v4l2-ctl` tetapi Python tidak bisa membaca frame, test kamera di luar Python:
+
+```bash
+ffplay /dev/video1
+```
+
+Jika `ffplay` juga gagal, masalahnya ada di driver/perangkat kamera, bukan di project.
+
 ## Catatan Penting
 
 Output model ditulis sebagai:
@@ -385,5 +527,5 @@ python inspect_dataset.py
 python visualize_features.py
 python train.py
 python evaluate.py
-python camera.py
+python camera.py /dev/video1
 ```
